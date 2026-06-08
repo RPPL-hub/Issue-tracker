@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-ink-900 text-slate-200 antialiased;
+  font-family: var(--font-sans);
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-white/5 bg-ink-700 shadow-sm;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-white/10 bg-ink-800 px-3 py-2 text-sm
+      text-slate-100 placeholder:text-slate-500
+      focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand;
+  }
+
+  .label {
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-400;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2
+      text-sm font-medium transition-colors disabled:cursor-not-allowed
+      disabled:opacity-50;
+  }
+
+  .btn-brand {
+    @apply btn bg-brand text-ink-900 hover:bg-brand-dark;
+  }
+
+  .btn-ghost {
+    @apply btn border border-white/10 bg-transparent text-slate-300
+      hover:bg-white/5;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs
+      font-medium;
+  }
+}
+
+/* Subtle scrollbar that fits the dark theme. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a3040;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a4257;
+  background-clip: content-box;
+}
