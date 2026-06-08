@@ -23,20 +23,23 @@ live dashboard, a comment timeline, and automatic saving so no data is ever lost
 | -------- | ------------------------------------------------- |
 | Frontend | Next.js 15 (App Router) + React 19 + Tailwind CSS |
 | Backend  | Next.js Route Handlers (REST API)                 |
-| Database | Prisma ORM + SQLite (dev) / Postgres (prod)       |
+| Database | Prisma ORM + PostgreSQL (Neon)                     |
 
 The frontend and backend live in **one app**, which keeps deployment simple.
 
 ## Run it locally
 
-Requires Node.js 18+ (Node 22 recommended).
+Requires Node.js 18+ (Node 22 recommended) and a free PostgreSQL database.
+The easiest option is [Neon](https://neon.tech) — you can use the same free
+database for both local development and production (see [DEPLOY.md](./DEPLOY.md)).
 
 ```bash
 # 1. Install dependencies
 npm install
 
-# 2. Point the app at a local SQLite database
+# 2. Configure the database connection
 cp .env.example .env
+#    then edit .env and paste your Neon connection string into DATABASE_URL
 
 # 3. Create the database tables and load sample data
 npm run db:push

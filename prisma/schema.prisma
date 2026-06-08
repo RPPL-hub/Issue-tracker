@@ -2,13 +2,16 @@
 // Persistent storage so every issue, status change, and comment is retained.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // Include the engine for Vercel's serverless runtime alongside the local one,
+  // so the deployed app can always locate the Prisma query engine.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
-  // Local dev uses SQLite (a single file). To deploy on a serverless host,
-  // change this to "postgresql" and update DATABASE_URL. See DEPLOY.md.
-  provider = "sqlite"
+  // PostgreSQL (a free Neon database) powers production on Vercel.
+  // DATABASE_URL is configured in the host's environment variables. See DEPLOY.md.
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

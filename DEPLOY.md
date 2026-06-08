@@ -1,100 +1,125 @@
-# Deploying the Rwenzori Issue Tracker
+# Deploying to rwenzori.in (Neon + Vercel + GoDaddy)
 
-This guide takes the app from your repository to a live site on **rwenzori.in**.
+This is the **free** hosting path, end to end. The app is already configured for
+it — PostgreSQL via Prisma, and a `vercel-build` step that automatically creates
+the database tables on first deploy. You just need to create two free accounts
+and add one DNS record at GoDaddy.
 
-> **What needs you:** I can build the app and prepare everything, but the final
-> "go live" steps happen in _your_ accounts — a hosting provider and your domain
-> registrar (where rwenzori.in is managed). I can't log into those for you, but
-> the steps below are short. Tell me which host you pick and I'll tailor the
-> exact config.
+> **What needs you:** creating the accounts and clicking through the steps below.
+> I can't log into Neon, Vercel, or GoDaddy for you, but everything in the code
+> is ready. Total time: ~15 minutes.
 
----
+**Overview — three free pieces:**
 
-## The big picture
-
-A live web app needs three things:
-
-1. **A host** that runs the app 24/7 (a server in the cloud).
-2. **A database** that keeps your issues saved.
-3. **A DNS record** at your domain registrar that points `rwenzori.in` at the host.
-
-This app keeps the frontend, backend, and database setup together, so there's
-only one thing to deploy.
+1. **Neon** — a free PostgreSQL database that stores your issues.
+2. **Vercel** — runs the app 24/7 and connects it to your domain.
+3. **GoDaddy** — where you add one DNS record to point `rwenzori.in` at Vercel.
 
 ---
 
-## Recommended path
+## Part 1 — Create the database (Neon)
 
-There are two beginner-friendly options. Pick **one**.
-
-### Option A — Railway / Render (keeps SQLite, simplest mental model)
-
-These hosts run the app on a small server with a **persistent disk**, so the
-SQLite database file just lives on that disk. No separate database to manage.
-
-1. Push this repo to GitHub (already done if you're reading this there).
-2. Create an account at [railway.app](https://railway.app) or
-   [render.com](https://render.com) and **"New Project → Deploy from GitHub"**,
-   selecting this repository.
-3. Add a **persistent disk/volume** mounted at `/data`.
-4. Set environment variables:
-   - `DATABASE_URL = file:/data/rpl.db`
-5. Set the commands:
-   - **Build:** `npm install && npm run build`
-   - **Start:** `npm run db:push && npm start`
-6. Deploy. The host gives you a temporary URL like `rpl-production.up.railway.app`
-   — open it to confirm the app works.
-7. (Optional, once) load sample data by running `npm run db:seed` from the host's
-   shell. Skip this for a clean, empty tracker.
-
-### Option B — Vercel + Neon Postgres (best free tier, serverless)
-
-Vercel is purpose-built for Next.js but its servers don't keep a local file, so
-the database lives in a free hosted Postgres (Neon).
-
-1. Create a free Postgres database at [neon.tech](https://neon.tech) and copy its
-   connection string.
-2. In `prisma/schema.prisma`, change the datasource provider from `sqlite` to
-   `postgresql`. _(One line — tell me and I'll do it and commit it.)_
-3. Import the repo at [vercel.com](https://vercel.com) → **New Project**.
-4. Set environment variable `DATABASE_URL` to your Neon connection string.
-5. Deploy. Vercel runs the build and gives you a `*.vercel.app` URL to test.
+1. Go to **[neon.tech](https://neon.tech)** and sign up (free, you can use GitHub).
+2. Create a new project — name it e.g. `rwenzori-issue-tracker`. Pick the region
+   closest to your team.
+3. After it's created, open **Connection string** (a "Connect" button on the
+   dashboard).
+4. **Copy the connection string.** It looks like:
+   ```
+   postgresql://rpl_owner:AbC123xyz@ep-cool-name-12345.eu-central-1.aws.neon.tech/neondb?sslmode=require
+   ```
+   - If Neon offers a **"Connection pooling"** toggle, leave it **OFF** and copy
+     the plain/direct string — it works for both creating the tables and running
+     the app.
+5. Keep this string handy for Part 2. Treat it like a password.
 
 ---
 
-## Connecting your domain (rwenzori.in)
+## Part 2 — Deploy the app (Vercel)
 
-Once the app is live on the host's temporary URL, point your domain at it. I
-recommend a **subdomain** like `issues.rwenzori.in` — it's the easiest and you
-can keep your main site separate.
+1. Make sure this repository is on GitHub (it is, in `RPPL-hub/Issue-tracker`).
+2. Go to **[vercel.com](https://vercel.com)** and sign up with your GitHub account.
+3. Click **Add New… → Project**, then **Import** the `Issue-tracker` repository.
+4. Vercel auto-detects **Next.js** — leave the build settings as they are. (The
+   app's `vercel-build` script handles creating the database tables for you.)
+5. Expand **Environment Variables** and add:
+   | Name           | Value                                      |
+   | -------------- | ------------------------------------------ |
+   | `DATABASE_URL` | _(paste your Neon connection string)_      |
+6. Click **Deploy**. Vercel installs, creates your database tables, builds, and
+   launches the app. When it finishes you'll get a URL like
+   `https://issue-tracker-xxxx.vercel.app` — open it to confirm it works. ✅
 
-1. In your host's dashboard, open the project's **Domains / Custom Domain**
-   settings and add `issues.rwenzori.in` (or the bare `rwenzori.in`). The host
-   will show you a DNS target — either:
-   - a **CNAME** value (e.g. `cname.vercel-dns.com` or `xxx.up.railway.app`), or
-   - an **A record** IP address.
-2. Log in to **wherever rwenzori.in is registered** (e.g. GoDaddy, Namecheap,
-   Cloudflare) and open its **DNS settings**.
-3. Add the record the host asked for:
-   - For a subdomain: a **CNAME** record, Host/Name `issues`, Value = the target
-     from step 1.
-   - For the bare domain: an **A** record, Host/Name `@`, Value = the IP.
-4. Save. DNS changes can take from a few minutes up to a few hours to propagate.
-5. The host automatically issues a free **HTTPS certificate** once it sees the
-   record. Then `https://issues.rwenzori.in` is live for your whole team. 🎉
+### (Optional) Load sample data
+
+Your live app starts **empty** (ready for real issues). If you'd like the demo
+issues from the screenshots instead, run this once from your computer with the
+same `DATABASE_URL` in your local `.env`:
+
+```bash
+npm install
+npm run db:seed
+```
+
+---
+
+## Part 3 — Connect your domain (GoDaddy)
+
+I recommend a **subdomain**, `issues.rwenzori.in` — it's the simplest and leaves
+your main `rwenzori.in` website untouched. (Steps for the bare domain are below too.)
+
+### 3a. Tell Vercel about the domain
+
+1. In Vercel, open your project → **Settings → Domains**.
+2. Type `issues.rwenzori.in` and click **Add**.
+3. Vercel will show you the exact DNS record to create — usually a **CNAME**
+   pointing to `cname.vercel-dns.com`. Keep that tab open.
+
+### 3b. Add the DNS record at GoDaddy
+
+1. Sign in at **[godaddy.com](https://godaddy.com)** → **My Products** → find
+   **rwenzori.in** → **DNS** (or "Manage DNS").
+2. Click **Add New Record** and enter:
+   | Field | Value                                       |
+   | ----- | ------------------------------------------- |
+   | Type  | `CNAME`                                     |
+   | Name  | `issues`                                    |
+   | Value | `cname.vercel-dns.com` _(use what Vercel shows)_ |
+   | TTL   | leave default (1 hour)                      |
+3. **Save.**
+4. Back in Vercel, the domain will switch to **Valid / Active** once it detects
+   the record (a few minutes, occasionally up to an hour). Vercel then issues a
+   free **HTTPS certificate** automatically.
+5. Visit **https://issues.rwenzori.in** — your team can now use it from anywhere. 🎉
+
+### Using the bare domain `rwenzori.in` instead
+
+If you want the app at the root (note: this replaces whatever is at rwenzori.in):
+
+1. In Vercel add `rwenzori.in` (and optionally `www.rwenzori.in`).
+2. At GoDaddy, add an **A** record: Name `@`, Value = the IP Vercel shows
+   (currently `76.76.21.21`). If GoDaddy has a default `@` A record (often the
+   "Parked" one), edit that one instead of adding a duplicate.
+3. Optionally add a **CNAME**: Name `www`, Value `cname.vercel-dns.com`.
 
 ---
 
 ## After it's live
 
-- **Backups:** the entire database is the file at `DATABASE_URL` (Option A) or
-  your Neon dashboard (Option B). Download it periodically to be safe.
-- **Phase 2:** logins/roles, email notifications, and department rosters are the
-  planned next features — none are required for the app to run today.
+- **Updates:** every time changes are pushed to the repo's main branch, Vercel
+  redeploys automatically.
+- **Backups:** Neon keeps your data and supports point-in-time restore on its
+  dashboard. You can also export the database any time.
+- **Costs:** Neon and Vercel both have free tiers that comfortably cover an
+  internal team tool. No payment needed to start.
+
+## Phase 2 (later)
+
+Per the project blueprint: user accounts & roles (login), email/webhook
+notifications, and department-specific assignee dropdowns. None are required for
+the app to run today.
 
 ---
 
-### Not sure which to choose?
-
-Tell me your priority — **lowest effort**, **completely free**, or **most
-control** — and I'll recommend one and prepare the exact files/commands for it.
+**Stuck on any step?** Tell me where you are (and paste any error message) and
+I'll get you unstuck.
