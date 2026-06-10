@@ -1,0 +1,68 @@
+// Rwenzori Process Issue Tracker (RPL) — data model
+// Persistent storage so every issue, status change, and comment is retained.
+
+generator client {
+  provider      = "prisma-client-js"
+  // Include the engine for Vercel's serverless runtime alongside the local one,
+  // so the deployed app can always locate the Prisma query engine.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  // PostgreSQL (a free Neon database) powers production on Vercel.
+  // DATABASE_URL is configured in the host's environment variables. See DEPLOY.md.
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Issue {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String
+  priority    String    @default("Medium") // Critical | High | Medium | Low
+  department  String    @default("Operations") // Operations | Logistics | Quality | IT | Admin
+  status      String    @default("Open") // Open | In Progress | Resolved
+  reportedBy  String
+  assignedTo  String
+  source      String    @default("web") // web | whatsapp
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  comments    Comment[]
+  whatsappMessages WhatsAppMessage[]
+
+  @@index([status])
+  @@index([priority])
+}
+
+// Raw audit log of every message the WhatsApp bot receives. Messages are
+// stored BEFORE AI processing so nothing is ever lost, then marked with the
+// classifier's verdict (and linked to the issue it created, if any).
+model WhatsAppMessage {
+  id          Int      @id @default(autoincrement())
+  externalId  String?  @unique // gateway message id, used to dedupe webhook retries
+  chatId      String
+  sender      String // phone number
+  senderName  String
+  messageType String   @default("text")
+  body        String
+  verdict     String   @default("pending") // issue | chatter | skipped | no_ai | error
+  confidence  Float?
+  receivedAt  DateTime @default(now())
+
+  issue   Issue? @relation(fields: [issueId], references: [id], onDelete: SetNull)
+  issueId Int?
+
+  @@index([chatId])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  body      String
+  author    String
+  createdAt DateTime @default(now())
+
+  issue   Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  issueId Int
+
+  @@index([issueId])
+}
