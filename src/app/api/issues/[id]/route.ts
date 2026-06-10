@@ -14,6 +14,7 @@ function fullDTO(issue: {
   status: string;
   reportedBy: string;
   assignedTo: string;
+  source: string;
   createdAt: Date;
   updatedAt: Date;
   comments: { id: number; body: string; author: string; createdAt: Date }[];
@@ -27,6 +28,7 @@ function fullDTO(issue: {
     status: issue.status,
     reportedBy: issue.reportedBy,
     assignedTo: issue.assignedTo,
+    source: issue.source,
     createdAt: issue.createdAt.toISOString(),
     updatedAt: issue.updatedAt.toISOString(),
     commentCount: issue.comments.length,

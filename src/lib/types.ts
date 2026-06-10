@@ -16,6 +16,7 @@ export interface IssueDTO {
   status: string;
   reportedBy: string;
   assignedTo: string;
+  source: string;
   createdAt: string;
   updatedAt: string;
   commentCount?: number;

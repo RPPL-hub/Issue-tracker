@@ -148,6 +148,11 @@ export default function IssueDetailPage() {
                 <span>
                   Reported by{" "}
                   <span className="text-slate-200">{issue.reportedBy}</span>
+                  {issue.source === "whatsapp" && (
+                    <span className="ml-1.5 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400 ring-1 ring-emerald-500/20">
+                      via WhatsApp
+                    </span>
+                  )}
                 </span>
                 <span className="flex items-center gap-1.5">
                   Assigned to <Avatar name={issue.assignedTo} size="sm" />

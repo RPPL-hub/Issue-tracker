@@ -8,6 +8,7 @@ async function main() {
   console.log("Seeding database...");
 
   // Clear existing data for a clean, repeatable seed.
+  await prisma.whatsAppMessage.deleteMany();
   await prisma.comment.deleteMany();
   await prisma.issue.deleteMany();
 

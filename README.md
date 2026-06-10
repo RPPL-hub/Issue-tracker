@@ -16,6 +16,7 @@ live dashboard, a comment timeline, and automatic saving so no data is ever lost
 - **Detail view** with a single-click workflow (`Open → In Progress → Resolved`)
 - **Activity & comments thread** — every update permanently saved as an audit trail
 - **Persistent storage** via a real database, so refreshing never loses data
+- **WhatsApp AI intake (optional)** — a bot in the team's WhatsApp group auto-detects problem reports with Claude and logs them as issues ([setup guide](./WHATSAPP.md))
 
 ## Tech stack
 
@@ -71,6 +72,7 @@ Open <http://localhost:3000>.
 | `GET`   | `/api/issues/:id`           | Get one issue with its comments      |
 | `PATCH` | `/api/issues/:id`           | Advance status / reassign            |
 | `POST`  | `/api/issues/:id/comments`  | Add a comment to the timeline        |
+| `POST`  | `/api/whatsapp/webhook`     | WhatsApp gateway intake ([docs](./WHATSAPP.md)) |
 
 ## Going live on your domain
 

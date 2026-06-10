@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createIssue } from "@/lib/issues";
 import {
   isDepartment,
   isPriority,
@@ -19,6 +20,7 @@ function toDTO(issue: {
   status: string;
   reportedBy: string;
   assignedTo: string;
+  source: string;
   createdAt: Date;
   updatedAt: Date;
   _count?: { comments: number };
@@ -32,6 +34,7 @@ function toDTO(issue: {
     status: issue.status,
     reportedBy: issue.reportedBy,
     assignedTo: issue.assignedTo,
+    source: issue.source,
     createdAt: issue.createdAt.toISOString(),
     updatedAt: issue.updatedAt.toISOString(),
     commentCount: issue._count?.comments ?? 0,
@@ -109,25 +112,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Sequential IDs starting at 101 so issues read as RPL-101, RPL-102, ...
-  const last = await prisma.issue.findFirst({
-    orderBy: { id: "desc" },
-    select: { id: true },
-  });
-  const nextId = last ? last.id + 1 : 101;
-
-  const created = await prisma.issue.create({
-    data: {
-      id: nextId,
-      title,
-      description,
-      priority,
-      department,
-      reportedBy,
-      assignedTo: assignedToRaw || "Unassigned",
-      status: "Open",
-    },
-    include: { _count: { select: { comments: true } } },
+  const created = await createIssue({
+    title,
+    description,
+    priority,
+    department,
+    reportedBy,
+    assignedTo: assignedToRaw,
   });
 
   return NextResponse.json({ issue: toDTO(created) }, { status: 201 });
