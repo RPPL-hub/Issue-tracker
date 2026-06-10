@@ -21,6 +21,11 @@ prisma/dev.db*
 .env
 .env*.local
 
+# self-hosted WhatsApp worker
+/worker/node_modules
+/worker/auth_info
+/worker/.env
+
 # misc
 .DS_Store
 *.pem

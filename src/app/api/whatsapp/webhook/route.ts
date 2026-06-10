@@ -83,13 +83,14 @@ async function processMessage(msg: IncomingMessage) {
 
   async function finish(
     verdict: string,
-    extra: { confidence?: number; issueId?: number } = {},
+    dbExtra: { confidence?: number; issueId?: number } = {},
+    responseExtra: { reply?: string } = {},
   ) {
     await prisma.whatsAppMessage.update({
       where: { id: stored.id },
-      data: { verdict, ...extra },
+      data: { verdict, ...dbExtra },
     });
-    return { ...base, action: verdict, ...extra };
+    return { ...base, action: verdict, ...dbExtra, ...responseExtra };
   }
 
   if (msg.type !== "text" || !msg.text) return finish("skipped");
@@ -115,15 +116,17 @@ async function processMessage(msg: IncomingMessage) {
     const rplId = formatIssueId(issue.id);
     const baseUrl = process.env.APP_BASE_URL?.replace(/\/$/, "");
     const link = baseUrl ? `\n${baseUrl}/issues/${issue.id}` : "";
-    await sendGroupReply(
-      msg.chatId,
-      `✅ Logged as ${rplId} — ${issue.title} (${issue.priority} · ${issue.department})${link}`,
-    );
+    const replyText = `✅ Logged as ${rplId} — ${issue.title} (${issue.priority} · ${issue.department})${link}`;
 
-    return finish("issue", {
-      confidence: verdict.confidence,
-      issueId: issue.id,
-    });
+    // Managed gateway (Whapi) posts the reply directly; a self-hosted worker
+    // instead sends the `reply` we return. Only one path runs per deployment.
+    const sentViaWhapi = await sendGroupReply(msg.chatId, replyText);
+
+    return finish(
+      "issue",
+      { confidence: verdict.confidence, issueId: issue.id },
+      sentViaWhapi ? {} : { reply: replyText },
+    );
   } catch (err) {
     console.error("WhatsApp classification failed:", err);
     return finish("error");
